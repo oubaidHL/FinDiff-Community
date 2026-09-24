@@ -442,6 +442,11 @@ this value up separately from the data directory.
 
 ## Support
 
-- Feature requests and bug reports: open an issue in this repository.
-- Docker image: https://hub.docker.com/r/oubaidhl/findiff
-- Website: https://findiff.fr
+This repository is the public hub for FinDiff. Use Discussions for questions, feature ideas, and bug reports:
+
+- 💬 [Join the Discussions](https://github.com/oubaidHL/FinDiff-Community/discussions)
+- 🐞 [Report a bug](https://github.com/oubaidHL/FinDiff-Community/discussions/categories/report-a-bug)
+- 💡 [Share an idea](https://github.com/oubaidHL/FinDiff-Community/discussions/categories/ideas)
+- ❓ [Ask a question](https://github.com/oubaidHL/FinDiff-Community/discussions/categories/q-a)
+
+Docker image: https://hub.docker.com/r/oubaidhl/findiff · Website: https://findiff.fr
