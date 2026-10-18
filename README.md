@@ -15,6 +15,7 @@ image ([`oubaidhl/findiff`](https://hub.docker.com/r/oubaidhl/findiff)) that
 you run against your own infrastructure and your own data.
 
 - Website: https://findiff.fr
+- Latest release: **v1.1.0** (see [What's new](#whats-new-in-v110) and [Updating FinDiff](#updating-findiff))
 - Docker Hub: https://hub.docker.com/r/oubaidhl/findiff
 - Author: [Oubaid HL](https://github.com/oubaidHL) — [LinkedIn](https://www.linkedin.com/in/oubaidhlaimi)
 
@@ -22,6 +23,7 @@ you run against your own infrastructure and your own data.
 
 ## Table of contents
 
+0. [What's new in v1.1.0](#whats-new-in-v110)
 1. [About FinDiff](#about-findiff)
 2. [The story behind it](#the-story-behind-it)
 3. [Core guarantee: read-only, always](#core-guarantee-read-only-always)
@@ -33,10 +35,22 @@ you run against your own infrastructure and your own data.
 9. [Configuration reference](#configuration-reference)
 10. [Scaling to very large tables](#scaling-to-very-large-tables)
 11. [Backups and data safety](#backups-and-data-safety)
-12. [FAQ](#faq)
-13. [Support](#support)
+12. [Updating FinDiff](#updating-findiff)
+13. [FAQ](#faq)
+14. [Support](#support)
 
 ---
+
+## What's new in v1.1.0
+
+- **Share data without the personal parts.** Anonymise a dump while it is exported: realistic fake names, emails, phones and IBANs, shape-preserving hashes, masks or empty values, by column pattern, with reusable **templates** and a review screen that shows real sample rows before you share anything.
+- **Send dumps to your own storage.** S3-compatible buckets (AWS, Cloudflare R2, MinIO, Backblaze, Wasabi), Azure Blob, SFTP (most NAS devices) or a mounted folder, per export or per schedule, with remote retention and a real connection test.
+- **Create missing tables on import.** A dump now carries each table's definition, so an import can rebuild the schema on an empty target (same engine), then load the data.
+- **A new dashboard.** A *Needs attention* list, trends, per-database health cards, most changed tables and a dumps and storage panel.
+- **Update notices.** The running version is shown in the app, and administrators are told when a newer release is out. One public file is read twice a day, nothing about you is sent, and `FINDIFF_UPDATE_CHECK=false` turns it off.
+- Fixes: PostgreSQL keys are visible to SELECT-only roles, Oracle internal objects no longer clutter the invalid-objects check, the single sign-on settings page loads on a fresh install, and the container now runs as a non-root user with a health check.
+
+Full details, screenshots and the manual: https://findiff.fr
 
 ## About FinDiff
 
@@ -124,6 +138,13 @@ All of FinDiff's own state — mappings, snapshots, diff history, settings,
 AI conversations — lives in its own local SQLite database, entirely
 separate from anything it monitors.
 
+**Importing a dump is the one exception, and it is deliberately separate.**
+Monitoring and exporting never write. Importing a dump into a database needs a
+*second, dedicated write connection* that an administrator configures for that
+database on purpose; the monitoring connection is never used to write. Without
+it, import is disabled for that database. A dry run changes nothing, and
+replacing data needs you to type the database name.
+
 ## Features
 
 **Schema mapping & documentation**
@@ -154,6 +175,19 @@ separate from anything it monitors.
 - **Data Integrity checks**: referential integrity (orphaned foreign keys)
   across all supported engines, plus Oracle-specific invalid PL/SQL object
   detection.
+
+**Dumps: backup, export, import and sharing**
+- Export a database to an encrypted-at-rest dump file and import it into another database of the **same engine** (PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, SQLite), with live progress and logs, a **dry run** that changes nothing, and **replace** mode that needs you to type the database name.
+- Monitoring stays strictly read-only. Importing is a separate, opt-in write path: each database needs its own **write connection** before it can be an import target.
+- **Create missing tables** on import from the definitions saved in the dump (types, keys, defaults, identity, indexes, foreign keys), so an empty target can be rebuilt. PostgreSQL, SQL Server and SQLite do it inside the import transaction; MySQL, MariaDB and Oracle commit schema changes immediately, so a failed load drops the tables it created.
+- **Schedules** with retention, and **expiring share links** with a download limit and an optional emailed code. Editors can request a share and administrators approve it.
+- **Anonymise before sharing**: per-column rules (fake values, hashes, masks, empty), reusable templates, a built-in personal-data template, and a review screen with sample rows. The original values never reach the file.
+- **Storage destinations**: copy dumps to S3-compatible storage, Azure Blob, SFTP/NAS or a folder, with remote retention. A failed copy never loses the dump.
+
+**Access & evidence**
+- Roles (viewer, editor, administrator), OpenID Connect **single sign-on** with PKCE and group-to-role mapping, **two-factor sign-in**, and an **audit log** of sensitive actions.
+- **Data quality rules** (unique, required, numeric range) with real violation counts, a monitoring-coverage check, and **scheduled compliance reports** (weekly or monthly PDF by email).
+- **Exact change feeds** for very large tables: PostgreSQL logical decoding, MySQL/MariaDB binary log, SQL Server Change Tracking and Oracle SCN, opt-in.
 
 **Alerting & retention**
 - Alert dispatch to Slack, Microsoft Teams, email (SMTP), or any generic
@@ -191,7 +225,8 @@ separate from anything it monitors.
 - Light / dark / system theme, and English / French language — both follow
   your operating system by default, and both are switchable at any time.
 - A guided first-run onboarding tour for every genuinely new account.
-- A Dashboard with a database activity timeline chart and summary cards.
+- A **Dashboard** with a needs-attention list, trends, per-database health cards, an activity chart and a dumps and storage panel.
+- A responsive interface that works on phones, and the running version shown in the sidebar and on the About page.
 
 **Database management**
 - Full CRUD for monitored databases directly in the UI: add, edit
@@ -203,14 +238,14 @@ separate from anything it monitors.
 
 ## Supported database engines
 
-| Engine | Monitoring | Notes |
-|---|---|---|
-| PostgreSQL | ✅ | Full support, including watermark and checksum fast-path |
-| MySQL | ✅ | Full support |
-| MariaDB | ✅ | Full support |
-| Microsoft SQL Server | ✅ | Includes native Change Tracking integration (opt-in, DBA-enabled) |
-| Oracle | ✅ | Includes native `ORA_ROWSCN` incremental scanning (opt-in) |
-| SQLite | ✅ | Supported as a monitored source in addition to being FinDiff's own local store |
+| Engine | Monitoring | Dumps (export and import) | Notes |
+|---|---|---|---|
+| PostgreSQL | ✅ | ✅ | Full support, including watermark and checksum fast-path |
+| MySQL | ✅ | ✅ | Full support |
+| MariaDB | ✅ | ✅ | Full support |
+| Microsoft SQL Server | ✅ | ✅ | Includes native Change Tracking integration (opt-in, DBA-enabled) |
+| Oracle | ✅ | ✅ | Includes native `ORA_ROWSCN` incremental scanning (opt-in) |
+| SQLite | ✅ | ✅ | Supported as a monitored source in addition to being FinDiff's own local store |
 
 ## Quick start
 
@@ -362,7 +397,13 @@ All configuration is via environment variables.
 | `FINDIFF_ADMIN_USERNAME` | No | — | Username for the bootstrap admin account, created only if no user exists yet. |
 | `FINDIFF_ADMIN_PASSWORD` | No | — | Password for the bootstrap admin account. If neither admin variable is set and no user exists, login will fail until you set them and restart. |
 | `FINDIFF_PORT` | No | `8080` | Port the HTTP server listens on inside the container. |
-| `FINDIFF_DATA_DIR` | No | `./data` | Where FinDiff's local SQLite store, encrypted credentials, and AI attachment uploads live. Always mount this as a persistent volume. |
+| `FINDIFF_DATA_DIR` | No | `/data` in the image, `./data` locally | Where FinDiff's local SQLite store, encrypted credentials, dump files and AI attachment uploads live. Always mount this as a persistent volume. |
+| `FINDIFF_PUBLIC_URL` | No | — | The address people use (for example `https://findiff.example.com`). Used in share links and as the single sign-on redirect address. Set it whenever FinDiff is behind a proxy. |
+| `FINDIFF_METRICS_TOKEN` | No | unset | Bearer token that enables `GET /api/metrics` for Prometheus. Unset means the endpoint returns 404. |
+| `FINDIFF_MAX_UPLOAD_GB` | No | `10` | Largest dump file that can be uploaded, in GB. |
+| `FINDIFF_SECRETS_DIR` / `FINDIFF_SECRET_*` | No | `/run/secrets` | Where `${file:NAME}` and `${env:NAME}` references in connection strings are read from, so passwords can stay out of FinDiff. |
+| `FINDIFF_UPDATE_CHECK` | No | `true` | Set to `false` to stop FinDiff from checking for new releases. |
+| `FINDIFF_UPDATE_URL` | No | `https://findiff.fr/latest.json` | Where the release manifest is read from. Change it only to point at an internal mirror. |
 
 Everything else (alert channels, retention windows, AI provider and model,
 upload size limits, per-database snapshot intervals) is configured from the
@@ -411,6 +452,28 @@ history/uploads. Back it up like you would any other database:
 - FinDiff never modifies the databases it monitors, so restoring a FinDiff
   backup only ever affects FinDiff's own observability history — it has no
   effect on the monitored databases themselves.
+
+## Updating FinDiff
+
+The running version is shown in the sidebar and on **About → Version**. FinDiff reads
+`https://findiff.fr/latest.json` shortly after it starts and then twice a day; when a newer
+release exists, administrators see a banner with the release notes and everyone sees an
+*Update to x.y.z* note in the sidebar. The request is one plain `GET` with a `User-Agent`
+that names your version: no account, database, host name or installation id is sent. Set
+`FINDIFF_UPDATE_CHECK=false` to turn it off.
+
+To update:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Your data, keys and dumps live in the mounted volume and are kept, and database migrations
+run automatically at start. Before a big jump, download a backup from **Settings → Backup**
+and keep the same `FINDIFF_MASTER_KEY`. To pin a release instead of following `latest`, use
+the tag, for example `oubaidhl/findiff:1.1.0`. Releases are listed under
+[Releases](https://github.com/oubaidHL/FinDiff-Community/releases).
 
 ## FAQ
 
