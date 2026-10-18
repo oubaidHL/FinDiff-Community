@@ -15,7 +15,7 @@ image ([`oubaidhl/findiff`](https://hub.docker.com/r/oubaidhl/findiff)) that
 you run against your own infrastructure and your own data.
 
 - Website: https://findiff.fr
-- Latest release: **v1.1.0** (see [What's new](#whats-new-in-v110) and [Updating FinDiff](#updating-findiff))
+- Latest release: **v1.1.1** (see [What's new](#whats-new-in-v110) and [Updating FinDiff](#updating-findiff))
 - Docker Hub: https://hub.docker.com/r/oubaidhl/findiff
 - Author: [Oubaid HL](https://github.com/oubaidHL) — [LinkedIn](https://www.linkedin.com/in/oubaidhlaimi)
 
@@ -472,7 +472,9 @@ docker compose up -d
 Your data, keys and dumps live in the mounted volume and are kept, and database migrations
 run automatically at start. Before a big jump, download a backup from **Settings → Backup**
 and keep the same `FINDIFF_MASTER_KEY`. To pin a release instead of following `latest`, use
-the tag, for example `oubaidhl/findiff:1.1.0`. Releases are listed under
+the tag, for example `oubaidhl/findiff:1.1.1`. If an update exits with `attempt to write a readonly database`, you are on 1.1.0 with a data
+volume made by an older image: pull **1.1.1**, which repairs the volume's ownership automatically
+at start (the server itself still runs as an unprivileged user). Releases are listed under
 [Releases](https://github.com/oubaidHL/FinDiff-Community/releases).
 
 ## FAQ
